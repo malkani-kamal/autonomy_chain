@@ -1,0 +1,68 @@
+./bin/cryptogen generate --config=./crypto-config.yaml
+
+TwoOrgsOrdererGenesis
+TwoOrgsChannel
+SampleConsortium
+
+export SYS_CHANNEL=scmnetwork
+
+mkdir channel-artifacts
+
+
+export FABRIC_CFG_PATH=$PWD
+#./bin/configtxgen -profile TwoOrgsOrdererGenesis -outputBlock ./channel-artifacts/genesis.block
+#../bin/configtxgen -profile TwoOrgsOrdererGenesis -channelID byfn-sys-channel -outputBlock ./channel-artifacts/genesis.block
+./bin/configtxgen -profile TwoOrgsOrdererGenesis -channelID $SYS_CHANNEL -outputBlock ./channel-artifacts/genesis.block
+  elif [
+
+
+
+#channel name should be always in small letters
+export CHANNEL_NAME=twoorgchannel
+./bin/configtxgen -profile TwoOrgsChannel -outputCreateChannelTx ./channel-artifacts/twoorgschannel.tx -channelID $CHANNEL_NAME
+./bin/configtxgen -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/buyermspanchors.tx -channelID $CHANNEL_NAME -asOrg BuyerMSP
+./bin/configtxgen -profile TwoOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/sellermspanchors.tx -channelID $CHANNEL_NAME -asOrg SellerMSP
+
+
+export home_directory=/home/ubuntu/blockchain/fabric-samples/scm-network
+
+sh clean.sh
+(to clean container and space)
+
+docker-compose -f docker-compose-cli.yaml -f docker-compose-couch.yaml up -d
+(all files which needs to be up , should be mentioned as -f)
+
+docker ps -a
+(to check what are the container which is up and running)
+
+docker logs <container id>
+(to check error in docker) 
+
+
+docker exec -it cli bash
+
+#CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/upm.tietonetworks.com/users/Admin@upm.tietonetworks.com/msp
+#CORE_PEER_LOCALMSPID="UpmMSP"
+#CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/upm.tietonetworks.com/peers/peer1.upm.tietonetworks.com/tls/ca.crt
+#CORE_PEER_TLS_ENABLED=true
+#CORE_PEER_ADDRESS=peer1.upm.tietonetworks.com:7051
+
+CORE_PEER_CHAINCODELISTENADDRESS=peer1.buyer.tcs.com:7052
+export CHANNEL_NAME=twoorgchannel && export CHANNEL_ID=twoorgchannel
+export ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/tcs.com/orderers/orderer.tcs.com/msp/tlscacerts/tlsca.tcs.com-cert.pem
+
+#
+
+#peer channel create -c $CHANNEL_NAME -f ./channel-artifacts/upmorgschannel.tx -o orderer.tietonetworks.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA
+peer channel create -c $CHANNEL_NAME -f ./channel-artifacts/twoorgschannel.tx -o orderer.tcs.com:7050 --tls --cafile $ORDERER_CA
+peer channel join -b $CHANNEL_NAME.block
+
+transfer scm-network/chaincode/doctor/doctor.go
+export CC_SRC_PATH="github.com/chaincode/doctor"
+
+peer chaincode instantiate -o orderer.tietonetworks.com:7050 --tls --cafile $ORDERER_CA -C $CHANNEL_NAME -n doctors_chain -l golang -v 1 -c '{"Args":["init","Ajit Shah","1","test1@gmail.com","9860606060","Aundh"]}' -P "OR('UpmMSP.peer','DhlMSP.peer','FinportMSP.peer')"
+
+peer chaincode invoke -o orderer.tietonetworks.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n doctors_chain -c '{"Args":["CreateDoctor","Amol Shaya","2","am@gmail.com","990909090","Baner"]}'
+
+
+
