@@ -1,0 +1,62 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+services:
+
+  orderer.softbit.tech:
+    container_name: orderer.softbit.tech
+    extends:
+      file: base/peer-base.yaml
+      service: orderer-base
+    volumes:
+        - ./channel-artifacts/genesis.block:/var/hyperledger/orderer/genesis.block
+        - ./crypto-config/ordererOrganizations/softbit.tech/orderers/orderer.softbit.tech/msp:/var/hyperledger/orderer/msp
+        - ./crypto-config/ordererOrganizations/softbit.tech/orderers/orderer.softbit.tech/tls:/var/hyperledger/orderer/tls
+        - orderer.softbit.tech:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+
+  peer1.public.softbit.tech:
+    container_name: peer1.public.softbit.tech
+    extends:
+      file: base/peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer1.public.softbit.tech
+      - CORE_PEER_ADDRESS=peer1.public.softbit.tech:8051
+      #- CORE_PEER_LISTENADDRESS=0.0.0.0:8051
+      #- CORE_PEER_CHAINCODEADDRESS=peer1.public.softbit.tech:8052
+      # CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:8052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.public.softbit.tech:8051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.public.softbit.tech:7051
+      - CORE_PEER_LOCALMSPID=PublicMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ./crypto-config/peerOrganizations/public.softbit.tech/peers/peer1.public.softbit.tech/msp:/etc/hyperledger/fabric/msp
+        - ./crypto-config/peerOrganizations/public.softbit.tech/peers/peer1.public.softbit.tech/tls:/etc/hyperledger/fabric/tls
+        - peer1.public.softbit.tech:/var/hyperledger/production
+    ports:
+      - 8051:8051
+
+  peer1.private.softbit.tech:
+    container_name: peer1.private.softbit.tech
+    extends:
+      file: base/peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer1.private.softbit.tech
+      - CORE_PEER_ADDRESS=peer1.private.softbit.tech:10051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.private.softbit.tech:10051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.private.softbit.tech:9051
+      - CORE_PEER_LOCALMSPID=PrivateMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ./crypto-config/peerOrganizations/private.softbit.tech/peers/peer1.private.softbit.tech/msp:/etc/hyperledger/fabric/msp
+        - ./crypto-config/peerOrganizations/private.softbit.tech/peers/peer1.private.softbit.tech/tls:/etc/hyperledger/fabric/tls
+        - peer1.private.softbit.tech:/var/hyperledger/production
+    ports:
+      - 10051:10051
